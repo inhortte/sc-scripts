@@ -102,7 +102,7 @@ Array.linrand(16, 0, ~gransSixteenths.size - 1).collect { |idx| ~gransSixteenths
 // Sixteenths
 (
   var clock = TempoClock(72/60);
-  var seq = Prand(~gransSixteenths, 16).asStream;
+  var seq = Prand(~gransSixteenths, 176).asStream;
   Routine({
     var buf;
     while {
@@ -118,14 +118,14 @@ Array.linrand(16, 0, ~gransSixteenths.size - 1).collect { |idx| ~gransSixteenths
 // Eighths
 (
   var clock = TempoClock(72/60);
-  var seq = Prand(~gransEighths, 16).asStream;
+  var seq = Prand(~gransEighths, 64).asStream;
   Routine({
     var buf;
     while {
 `     buf = seq.next;
       buf.notNil;
     } {
-      Synth(\granPlayer, [\buf, buf, \level, [0.2, {Rand(0.4, 0.6)}], \dur, 0.2]);
+      Synth(\granPlayer, [\buf, buf, \level, 0.4, \dur, 0.14]);
       0.4166666666666667.wait;
     }
   }).play;
@@ -134,7 +134,7 @@ Array.linrand(16, 0, ~gransSixteenths.size - 1).collect { |idx| ~gransSixteenths
 // Triplets
 (
   var clock = TempoClock(72/60);
-  var seq = Prand(~gransTrips, 16).asStream;
+  var seq = Prand(~gransTrips, 48).asStream;
   Routine({
     var buf;
     while {
