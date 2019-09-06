@@ -104,3 +104,5 @@ b = Synth(\filter);
 c = Synth(\noise);
 
 a.set(\amp, 0.1);
+
+
