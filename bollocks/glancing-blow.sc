@@ -1,4 +1,7 @@
-s.boot;
+(
+  s.options.numBuffers = 8192; 
+  s.boot;
+)
 s.plotTree;
 
 (
@@ -169,22 +172,22 @@ Synth(\pluck);
 (
   var clock = TempoClock(90/60);
   var cDorian = [
-    1175, 1244, 1244, 1047, 1047, 1397
+    1175, 1244, 1244, 1047, 1047, 1397 // d Eb Eb c c f
   ];
   var cQuartal = [
-    1244, 1397, 1397, 1047, 1047, 1661
+    1244, 1397, 1397, 1047, 1047, 1661 // Eb f f c c Ab
   ];
   var aQuartal = [
-    1047, 1244, 1244, 880, 880, 1397
+    1047, 1244, 1244, 880, 880, 1397 // c Eb Eb a a f
   ];
   var bbQuartal = [
-    1109, 1244, 1244, 932, 932, 1480
+    1109, 1244, 1244, 932, 932, 1480 // Db Eb Eb Bb Gb
   ];
   var cDorian2 = [
-    1175, 1244, 1244, 1047, 1047, 1568
+    1175, 1244, 1244, 1047, 1047, 1568 // d Eb Eb c c g
   ];
   var cMinor = [
-    1175, 1244, 1244, 1047, 1047, 1661
+    1175, 1244, 1244, 1047, 1047, 1661 // d Eb Eb c c Ab
   ];
   var seq1 = cDorian ++ cDorian ++ cDorian ++
     cQuartal ++ cQuartal ++ cQuartal ++
@@ -192,6 +195,15 @@ Synth(\pluck);
     bbQuartal ++ bbQuartal ++ bbQuartal ++
     cDorian2 ++ cDorian2 ++ cDorian2 ++
     cMinor ++ cMinor ++ cMinor;
+  var ebF = [ 1244, 1397, 1397, 1244, 1244, 1397 ];
+  var ebG = [ 1244, 1568, 1568, 1244, 1244, 1568 ];
+  var ebAb = [ 1244, 1661, 1661, 1244, 1244, 1661 ];
+  var seq1alt = ebF ++ ebF ++ ebF ++
+    ebF ++ ebF ++ ebF ++
+    ebF ++ ebF ++ ebF ++
+    ebF ++ ebF ++ ebF ++
+    ebG ++ ebG ++ ebG ++
+    ebAb ++ ebAb ++ ebAb;
   var seq2 = [
     1397, 1397, 932, // f f Bb
     1760, 1865, 1865, 1568, 1568, 1244, // a Bb Bb g g Eb
@@ -201,9 +213,10 @@ Synth(\pluck);
     1760, 1865, 1865, 1568, 1568, 1244, // a Bb Bb g g Eb
     1568, 1760, 1760, 1397, 1397 // g a a f f
   ];
+  var seq2alt = [ 1568, 1568, 1760 ] ++ [ 1568, 1760, 1760, 1568, 1568, 1760 ].wrapExtend(35);
   Pbind(
     \instrument, \pluck,
-    \freq, Pseq(seq2, 1),
+    \freq, Pseq(seq2alt, 1),
     \amp, Pwhite(0.3, 0.6),
     \pan, Pwhite(-0.7, 0.7),
     \c1, Pwhite(5, 10),
@@ -212,7 +225,71 @@ Synth(\pluck);
   ).play(clock);
 )
 
+(
+  var seq2alt = [ 1568, 1568, 1760 ] ++ [ 1568, 1760, 1760, 1568, 1568, 1760 ].wrapExtend(11);
+  seq2alt.postln;
+)
+
+(
+  SynthDef(\klankNoise, {
+    var wn = WhiteNoise.ar(0.1);
+    var wnF = OneZero.ar(wn, Line.kr(0.01, 1, 7) - 0.5);
+    var wnEnv = Env.perc(0.01, 7).kr(2) ! 4;
+    var wnOut = wnF * wnEnv;
+    var dustEnv = XLine.kr(start: 512, end: 1, dur: 7, doneAction: Done.freeSelf) ! 4;
+    var klank = Klank.ar(`[[349, 523, 1397, 1866], [1, 0.8, 0.6, 0.5], [3, 2, 1, 4]], Dust.ar(dustEnv, 0.1));
+    var mix = Mix([ wnOut, klank ]);
+    Out.ar(0, Splay.ar(mix));
+  }).add;
+)
+
+Synth(\klankNoise);
+
+(
+  SynthDef(\granPlayer, { | out = 0, buf = 0, gate = 1, level = 0.5, dur = 1 |
+    var signal, filter;
+    // var env = Linen.kr(gate: gate, releaseTime: 0.1, susLevel: level, doneAction: Done.freeSelf);
+    var env = EnvGen.kr(Env.perc(0.01, dur * 0.8), 1.0, levelScale: level, doneAction: Done.freeSelf);
+    signal = PlayBuf.ar(numChannels: 1, bufnum: buf, rate: BufRateScale.kr(buf));
+    signal = signal * env;
+    filter = GlitchRHPF.ar(signal, 742, 0.4, Saw.kr(0.5, 1.3));
+    Out.ar(out, filter ! 2);
+  }).add;
+)
+
+(
+  s.freeAllBuffers;
+  ~ramblingQuarters = "/home/polaris/flavigula/xian/granules-of-ramblings-to-krzys-quarters/*.wav".pathMatch.collect { |file|
+    Buffer.read(s, file);
+  };
+  ~ramblingEighths = "/home/polaris/flavigula/xian/granules-of-ramblings-to-krzys-eighths/*.wav".pathMatch.collect { |file|
+    Buffer.read(s, file);
+  };
+)
+
+(
+  var clock = TempoClock(90/60);
+  var durs = [
+    1, 1, 1, 0.5
+  ] / 2;
+  Pbind(
+    \instrument, \granPlayer,
+    \dur, Pseq(durs, inf),
+    \buf, Prand(~ramblingEighths, inf)
+  ).play(clock);
+)
+
 // Tests
+
+(
+  {
+    GlitchHPF.ar(
+      BrownNoise.ar(0.1.dup),
+      0.1,
+      Saw.kr(1, 10)
+    )
+  }.play;
+)
 
 Env.perc(attackTime: 0.05, releaseTime: 0.2, curve: 2.7).plot;
 { LFCub.kr(0.1, 0.5 * pi) }.plot;
@@ -243,4 +320,10 @@ Env.perc(attackTime: 0.05, releaseTime: 0.2, curve: 2.7).plot;
     )
   }.play
 )
-
+{ OneZero.ar(WhiteNoise.ar(0.5), MouseX.kr(-0.49, 0.49)) }.scope(1);
+(
+  { 
+    var dustEnv = XLine.kr(start: 512, end: 1, dur: 7, doneAction: Done.freeSelf) ! 4;
+    Klank.ar(`[[349, 523, 1397, 1866], [1, 0.8, 0.6, 0.5], [3, 2, 1, 4]], Dust.ar(dustEnv, 0.1)) 
+  }.play;
+)
