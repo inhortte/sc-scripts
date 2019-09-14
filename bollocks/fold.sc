@@ -14,11 +14,15 @@ s.plotTree;
     ).kr(2);
     var tri = LFTri.ar(
       freq: freq,
-      iphase: [0.3, 1.6, 2.9, 3.2]
+      iphase: [0, 1.3, 2.9, 3.2]
     ) * env;
+    var lpf = LPF.ar(
+      in: tri,
+      freq: XLine.kr(freq * 7, freq / 2, dur * 0.8, doneAction: Done.freeSelf)
+    );
     Out.ar(
       out,
-      Splay.ar(tri)
+      Splay.ar(lpf)
     );
   }).add;
 )
