@@ -99,3 +99,15 @@ Synth(\pulseOfAgatha)
   ).play(clock);
 )
 
+(
+  var clock = TempoClock(90/60);
+  var ampSeq = [
+    0.5, 0, 0, 0, 0, 0,
+    0, 0, 0, 0.5, 0, 0,
+  ] ++ Array.fill(12, 0);
+  Pbind(
+    \instrument, \dustOfTime,
+    \amp, Pseq(ampSeq, inf),
+    \dur, 1/2
+  ).play(clock);
+)
