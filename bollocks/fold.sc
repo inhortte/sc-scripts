@@ -354,3 +354,74 @@ x = Synth.head(a, \impulse);
 y = Synth.tail(a, \exDelay, [ delayTime: 0.4 ]);
 
 y.free;
+
+(
+  SynthDef(\sawPuck, {
+    arg outBus = 0, leadFreqDelta = 0, leadTimeDelta = 0.01, freq = 220, dur = 1, amp = 0.1, spunk = 1;
+    var sustainTime = spunk * dur * 0.5;
+    var releaseTime = spunk * dur * 1.3;
+    //var env = Env.perc(0.01 + leadTimeDelta, dur * 0.8).kr(2);
+    var env = EnvGen.kr(
+      Env.new([0, 1, 0.8, 0], [leadTimeDelta, sustainTime, releaseTime], -3),
+      doneAction: Done.freeSelf
+    );
+    var saw = DPW4Saw.ar(
+      freq: XLine.kr(freq + leadFreqDelta, freq, leadTimeDelta + 0.01),
+      mul: amp
+    ) * env;
+    Out.ar(outBus, saw ! 2);
+  }).add;
+)
+(
+  SynthDef(\puckFilter, {
+    arg inBus = 7, outBus = 0, low = 277, high = 830, bpm = 84, div = 3;
+    var lpf = RLPF.ar(
+      in: In.ar(inBus, 2),
+      freq: SinOsc.kr(1/(60/bpm/div), 0).range(low, high),
+      rq: 0.2
+    );
+    var bpf = GlitchBPF.ar(
+      in: In.ar(inBus, 2),
+      freq: SinOsc.kr(1/(60/bpm/div), 0).range(low * 3, high * 3.2),
+      rq: 0.1,
+      mul: 3
+    );
+    var mix = Mix([ lpf * 0.5, bpf * 0.5 ]);
+    Out.ar(outBus, mix);
+  }).add;
+)
+(
+  SynthDef(\brown, {
+    arg outBus = 0, dur = 1, amp = 0.1;
+    var env = Env.perc(0.005, dur * 0.1, curve: -3).kr(2);
+    var noise = BrownNoise.ar(amp) * env;
+    Out.ar(outBus, noise ! 2);
+  }).add;
+)
+
+(
+  var clock = TempoClock(90/60);
+  var pBus = Bus.audio(s, 2);
+  g = Group.basicNew(s, 1);
+  Pbind(
+    \instrument, \sawPuck,
+    \outBus, pBus,
+    \group, g,
+    \addAction, 0,
+    \dur, 9,
+    \leadTimeDelta, 0.166667,
+    \leadFreqDelta, -58,
+    \freq, 233,
+    \spunk, 0.1111111
+  ).play(clock);
+  Synth.tail(g, \puckFilter, [ inBus: pBus, outBus: 0, low: 466, high: 523, bpm: 90, div: 4 ]);
+  Pbind(
+    \instrument, \brown,
+    \amp, 0.2,
+    \outBus, 0,
+    \group, g,
+    \addAction, 1,
+    \dur, 9
+  ).play(clock);
+)
+
