@@ -104,3 +104,37 @@ b = Synth(\filter);
 c = Synth(\noise);
 
 a.set(\amp, 0.1);
+
+~deadBus = Bus.audio(server: s, numChanenls: 2);
+(
+  SynthDef(\smooth, { | out = 0, freq = 440, sustain = 1, amp = 0.5 |
+    var sig, env, amps, harms = [1, 2, 4, 5, 7, 8];
+    amps = (1 / harms) * amp;
+    ((1 / harms.squared) * amp).postln;
+    amps.postln;
+    env = EnvGen.kr(Env.linen(0.05, sustain, 0.1), doneAction: Done.freeSelf);
+    sig = SinOsc.ar(
+      freq * harms,
+      0,
+      amps
+    ) * env;
+    Out.ar(out, Splay.ar(sig))
+  }).add;
+)
+(
+  var boink = [ 74, 74, 73, 73, 71, 71, 64, 64, 68 ];
+  var durs = [ 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 0.333, 1.333 ];
+  Pbind(
+    \instrument, \smooth,
+    \freq, Pseq(boink.collect { |midi| midi.midicps }, inf),
+    \dur, Pseq(durs, inf),
+    \out, ~deadBus,
+    \sustain, 0.1
+  ).play(TempoClock(84/60));
+)
+(
+  var fiveSecondWave = { SinOsc.kr(0.2).range(220, 880); }.play;
+  var saw = { Saw(522, 0.4) }.play;
+  var bpf = BPF.ar(in: In.ar(~deadBus, 2), freq: fiveSecondWave, rq: 0.3);
+  { Out.ar(0, bpf) }.play;
+)
