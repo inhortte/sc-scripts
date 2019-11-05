@@ -2,6 +2,7 @@
   s.options.numBuffers = 8192; 
   s.boot;
 )
+s.plotTree;
 
 // load soundfiles to buffers
 (
