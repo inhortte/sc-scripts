@@ -3,21 +3,24 @@
   s.boot;
 )
 s.plotTree;
-
+Array.fill(7, { |n| (n + 1).squared + 1}).postln;
 (
-  ~scuttleBuf = Buffer.read(s, "/home/polaris/flavigula/xian/sheriff-film/scuttle.wav");
+  ~scuttleBuf = Buffer.read(s, "/home/polaris/flavigula/xian/sheriff/scuttle.wav");
   SynthDef(\granulate, { | buf |
     var mg, delay1, delay2, mix;
     var winsizes = Array.fill(7, { |n| (n + 1) * 0.004 }).reverse;
     var grainrates = Array.fill(7, { |n| (n + 1).squared + 1});
-    grainrates = grainrates.reverse ++ grainrates;
+    // grainrates = grainrates.reverse ++ grainrates;
+    grainrates = [10, 2, 6] / 2;
     winsizes = winsizes.reverse ++ winsizes;
+    winsizes = [ 0.01, 0.002, 0.05 ];
+    winsizes = [ 0.035, 0.052, 0.035, 0.017 ] / 2;
     winsizes.postln;
     mg = MonoGrain.ar(
       in: PlayBuf.ar(1, buf, loop: 0),
-      winsize: 0.007,
+      winsize: winsizes,
       grainrate: grainrates,
-      winrandpct: 0,
+      winrandpct: 0.12,
       mul: 0.1
     );
     mix = Mix(mg);
@@ -28,7 +31,6 @@ s.plotTree;
     );
   }).add;
 )
-
 Synth(\granulate, [buf: ~scuttleBuf]);
 
 (
