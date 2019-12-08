@@ -1,4 +1,7 @@
-s.boot;
+(
+  s.options.numBuffers = 8192; 
+  s.boot;
+)
 s.plotTree;
 
 (
@@ -138,3 +141,5 @@ a.set(\amp, 0.1);
   var bpf = BPF.ar(in: In.ar(~deadBus, 2), freq: fiveSecondWave, rq: 0.3);
   { Out.ar(0, bpf) }.play;
 )
+
+
