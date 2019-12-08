@@ -12,12 +12,26 @@ s.plotTree;
     var fEnv = EnvGen.kr(
       Env.new([ freq * ratio, freq ], [ sweeptime ], \exp)
     );
-    var env = EnvGen.kr(
-      Env.new([0, 1, decayL, 0], [0.01, decay1, decay2], -3),
+    var env1 = EnvGen.kr(
+      Env.new([0, 1, decayL, 0], [0.01, decay1 * 2, decay2 * 2], -3),
       doneAction: Done.freeSelf
     );
-    var signal = SinOsc.ar(fEnv, 0.5pi, preamp).distort * env * amp;
-    Out.ar(outBus, signal ! 2);
+    var env2 = EnvGen.kr(
+      Env.new([0, 1, decayL, 0], [0.01, decay1, decay2], -3),
+      doneAction: Done.none
+    );
+    var sin1 = SinOscFB.ar(
+      freq: fEnv, 
+      feedback: pi / 6,
+      mul: preamp
+    ).softclip * env1 * amp;
+    var sin2 = SinOscFB.ar(
+      freq: [ fEnv * 2, fEnv * 3, fEnv * 4 ],
+      feedback: pi / 3,
+      mul: [ preamp * 0.5, preamp * 0.4, preamp * 0.3 ],
+    ).softclip * env2 * amp * 0.4;
+    var mix = Mix([ sin1 ! 2, Splay.ar(sin2)]);
+    Out.ar(outBus, mix);
   }).add;
 )
 
@@ -48,17 +62,21 @@ Synth(\snare, [ freq: 3729, amp: 12, decay: 0.04, rq: 0.06 ]);
 )
 (
   var clock = TempoClock(84/60);
+  var thompFreqs = [58, 69];
   var thompDurs = [1, 1, 0.5, 1.5];
   var thompAmps = [0.5, 0.4, 0.4, 0.3];
   Pbind(
     \instrument, \thomp,
     \dur, Pseq(thompDurs, inf),
     \amp, Pseq(thompAmps, inf),
-    \freq, 69, // Db,
+    \freq, Pseq(thompFreqs, inf),
     \decayL, Prand([ 0.8, 0.6, 0.7, 0.83, 0.5 ], inf),
     \decay1Base, Prand([ 0.1, 0.08, 0.11, 0.09 ], inf),
-    \decay2Base, Prand([ 0.04, 0.01, 0.1, 0.07 ], inf)
+    \decay2Base, Prand([ 0.04, 0.01, 0.1, 0.07 ], inf),
+    \sweeptime, 0.04,
+    \ratio, 3.5
   ).play(clock);
+  /*
   Pbind(
     \instrument, \snare,
     \amp, Pseq(~hhAmps, 1),
@@ -68,6 +86,7 @@ Synth(\snare, [ freq: 3729, amp: 12, decay: 0.04, rq: 0.06 ]);
     \decay, 0.04,
     \rq, 0.04
   ).play(clock);
+  */
 )
 
 (
