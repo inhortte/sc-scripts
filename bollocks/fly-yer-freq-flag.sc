@@ -37,6 +37,23 @@ s.plotTree;
   }).add;
 )
 Synth(\tamborLow, [ dur: 1, amp: 0.5 ]);
+(
+  var durs = [ 1.7777778, 1.5555556 ];
+  var freqs = [ 
+    43.65, 43.65, 43.65, 43.65, // f
+    43.65, 43.65, 43.65, 43.65, // f
+    69.3, 69.3, 69.3, 69.3, // c#
+    69.3, 69.3, 69.3, 69.3, // c#
+    61.74, 61.74, 61.74, 61.74, // b
+    58.27, 58.27 // Bb
+  ];
+  Pbind(
+    \instrument, \tamborLow,
+    \freq, Pseq(freqs, 1),
+    \dur, Pseq(durs, inf),
+    \amp, 0.5
+  ).play;
+)
 
 Env.circle(levels: [1, 0.2, 1], times: [ 4, 4 ], curve: [ 1, -1 ]).plot;
 (
@@ -70,3 +87,120 @@ Env.circle(levels: [1, 0.2, 1], times: [ 4, 4 ], curve: [ 1, -1 ]).plot;
   }).add;
 )
 Synth(\breathingDust, [ cycle: 4, amp: 0.4 ]);
+
+Array.fill(10, { 1.0.linrand });
+Array.fill(16, { 1.0 - 2.0.rand });
+(
+  SynthDef(\rakingPulse, {
+    arg outBus = 0, freq = 1396.91, amp = 0.1, rq1 = 0.5, rq2 = 0.5, grainTrigger = 0, grainDur = 1, grainPan = 0;
+    var baseNoise = BrownNoise.ar(amp);
+    var lpf1 = RLPF.ar(in: baseNoise, freq: freq, rq: rq1);
+    var lpf2 = RLPF.ar(in: baseNoise, freq: freq * 0.97, rq: rq2);
+    var grainy = GrainIn.ar(2, grainTrigger, grainDur, [ lpf1, lpf2 ], grainPan, -1, 64);
+    var aPass = AllpassL.ar(
+      in: grainy,
+      maxdelaytime: 0.03125,
+      delaytime: [ 0, 0.015625, 0.0234375, 0.01953125, 0.015 ],
+      decaytime: [ 0.015625, 0.2343, 0.019 ]
+    );
+    Out.ar(outBus, Splay.ar(aPass)); 
+  }).add;
+)
+(
+  SynthDef(\crackling, {
+    arg outBus = 0, freq = 1396.91, amp = 0.1, rq1 = 0.5, rq2 = 0.5, chaos = 1.5, dur = 1;
+    var env = EnvGen.ar(
+      Env.circle([ freq * 4, freq / 8 ], [ dur * 0.8, dur * 0.2 ], [ 2, -5 ]),
+      doneAction: Done.none
+    );
+    var whiteNoise = Crackle.ar(chaos, amp);
+    var dist = InsideOut.ar(whiteNoise);
+    var bpf1 = BPF.ar(in: dist, freq: freq, rq: rq1 * 0.25);
+    var bpf2 = BPF.ar(in: dist, freq: freq * 0.94, rq: rq2 * 0.25);
+    var lpf = LPF.ar([ bpf1, bpf2 ], freq: env);
+    Out.ar(outBus, Splay.ar(lpf));
+  }).add;
+)
+Synth(\rakingPulse);
+Synth(\crackling, [ amp: 0.9, chaos: 2.0 ]);
+(
+  var rqs = Array.fill(10, { 1.5.linrand });
+  var pans = Array.fill(16, { 1.0 - 2.0.rand });
+  var beatLength = 0.6666666666666666, swing = 0.6666666666666;
+  var rp = Synth(\rakingPulse, [ grainDur: beatLength / 36, amp: 0.5 ]);
+  var cr = Synth(\crackling, [ amp: 1.3, chaos: 2.0, dur: beatLength ]);
+  Routine({
+    loop({
+      rqs.do({
+        rp.set(\rq1, rqs.choose);
+        cr.set(\rq1, rqs.choose);
+        rp.set(\rq2, rqs.choose);
+        cr.set(\rq2, rqs.choose);
+        rp.set(\grainPan, pans.choose);
+        (beatLength * swing).wait;
+        rp.set(\rq1, rqs.choose);
+        rp.set(\rq2, rqs.choose);
+        rp.set(\grainPan, pans.choose);
+        (beatLength - (beatLength * swing)).wait;
+      });
+    })
+  }).play;
+  Routine({
+    loop({
+      rp.set(\grainTrigger, 1);
+      0.001.wait;
+      rp.set(\grainTrigger, 0);
+      (beatLength / 24 - 0.001).wait;
+    });
+  }).play;
+)
+
+Array.fill(6, { 1 + 2.0.sum3rand });
+
+(
+  SynthDef(\pulsePerc, {
+    arg outBus = 0, freq = 1396.91, amp = 0.1, cycle = 1;
+    var circleEnv = EnvGen.kr(
+      Env.circle(levels: [0.3, 1], times: [ cycle * 0.99, cycle * 0.01 ], curve: [ -5, 0 ]),
+      doneAction: Done.none
+    );
+    var dust = Dust.ar(
+      circleEnv * 512 * Array.fill(6, { 1 + 2.0.sum3rand })
+    );
+    var brownEnv = EnvGen.ar(
+      Env.perc(0.0001, 0.0001, curve: -5),
+      dust,
+      doneAction: Done.none
+    );
+    var noise = PinkNoise.ar(brownEnv) * amp;
+    var bpf = BPF.ar(
+      in: noise,
+      freq: [ freq * 2, freq ],
+      rq: LFTri.kr(1 / cycle).range(0.4, 2)
+    );
+    var aPass = AllpassL.ar(
+      in: bpf,
+      maxdelaytime: 0.03125,
+      delaytime: [ 0, 0.015625, 0.0234375 ],
+      decaytime: [ 0.015625, 0.015 ]
+    );
+    Out.ar(outBus, Splay.ar(aPass));
+  }).add;
+)
+(
+  SynthDef(\thwizzle, {
+    arg outBus = 0, inBus = 7, cycle = 1, freq = 1396.91, multiplier = 4;
+    var lpf = RLPF.ar(
+      in: In.ar(inBus, 2),
+      freq: SinOsc.ar([cycle * 2, cycle, cycle * 0.333333, cycle * 0.1111111]).range(freq * 0.6 * multiplier, freq * 1.4 * multiplier),
+      rq: 0.7
+    );
+    Out.ar(outBus, Splay.ar(lpf));
+  }).add;
+)
+(
+  g = Group.basicNew(s, 1);
+  d = Bus.audio(s, 2);
+  Synth.head(g, \pulsePerc, [ outBus: d, cycle: 0.66666666, amp: 0.8 ]);
+  Synth.tail(g, \thwizzle, [ inBus: d, cycle: 5.333333, multiplier: 4 ]);
+)

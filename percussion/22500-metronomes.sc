@@ -7,7 +7,7 @@ s.plotTree;
 (
   SynthDef(\metronom, {
     arg outBus = 0, dur = 1, amp = 0.1;
-    var env = Env.perc(0.01, dur * 0.05, curve: -5).kr(2);
+    var env = Env.perc(0.001, dur * 0.03, curve: -5).kr(2);
     var noise = PinkNoise.ar(amp) * env;
     Out.ar(outBus, noise ! 2);
   }).add;
