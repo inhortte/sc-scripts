@@ -141,28 +141,4 @@ Array.linrand(16, 0, ~gransSixteenths.size - 1).collect { |idx| ~gransSixteenths
     }
   }).play;
 )
-( 
-// PATTERN
-
-Pbind(*[
-	instrument: \bufplayer,
-	
-	bufnum:
-	Pseq([0,1,2,3,4,5,7,8,Rest()], inf),
-
-	dur:
-	Pseq(Array.fill(9, { 0.1.linrand }).put(8,7), inf),
-	
-	startpos:
-	Pseq(
-		Array.fill(4, { 180.rand })
-		.addAll(Prand(Array.fill(10, { 180.rand }),1) ! 2)
-		.addAll(Array.fill(3, { 180.rand })), inf),
-	
-    legato:
-	Prand([0.95,0.98,0.9,1,0.3], inf),
-	
-]).play;
-
-)
-
+ 
