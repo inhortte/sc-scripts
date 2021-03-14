@@ -7,7 +7,7 @@ s.meter;
 s.scope;
 
 (
-  var smpPath = PathName("/home/polaris/rummaging_round/sc-scripts/robbed-and-heavily-modified/serbian-princess-samples");
+  var smpPath = PathName("/home/polaris/rummaging_round/sc-scripts/robbed-and-heavily-modified/at-taa-ag-samples");
 
   ~smpBuffers.do(_.free); 
   ~smpBuffers = Dictionary();
@@ -32,13 +32,13 @@ s.scope;
       Out.ar( out,
           PlayBuf.ar(1, bufnum, BufRateScale.kr(bufnum))
       )
-  }).play(s,[\bufnum, ~getSmp.("fuzz-4")]);
+  }).play(s,[\bufnum, ~getSmp.("zel-f")]);
 )
 x.free;
 
 (
-  var sr = ~getSmp.("bojana").sampleRate;
-  var nf = ~getSmp.("bojana").numFrames;
+  var sr = ~getSmp.("zel-f").sampleRate;
+  var nf = ~getSmp.("zel-f").numFrames;
   (nf / sr).postln
 )
 
@@ -57,42 +57,117 @@ x.free;
   }).add; 
 )
 
-Array.fill(5, { |i| ((117953 / 5) * i).trunc; }).keep(2)
+Synth(\ggrain, [outBus: 0, bufnum: ~getSmp.("zel-f"), startPos: 0.0, dur: 0.5, rate: 1.0]);
 
 (
-  ~belch = { |regexp, outBus, parts, gap, times|
+  SynthDef(\grainy, {
+    arg regexp, outBus, parts, dur;
     var smp = ~getSmp.(regexp);
-    var sr = smp.sampleRate;
+    var length = smp.numFrames / smp.sampleRate;
+    var durHigh = length / parts;
+    var durLow = length / parts * 0.3;
     var startPoses = Array.fill(parts, {
       arg i;
       ((smp.numFrames / parts) * i).trunc;
+    }).scramble;
+    parts.do({
+      startPoses.do({
+        arg startPos;
+        var dur = rrand(durLow, durHigh);
+        var attack = rrand(0.01, 0.1);
+        Synth(\ggrain,
+          [
+            \outBus, outBus,
+            \bufnum, smp,
+            \rate, [1.0, 0.5, 2].wchoose([0.7, 0.1, 0.2]),
+            \startPos, startPos,
+            \amp, 0.2, // [0.5, 0.7, 0.8, 0.3, 0.0].wchoose([0.2, 0.1, 0.05, 0.2, 0.45]) * 2,
+            \pan, 1.0.rand2,
+            \attack, attack,
+            \dur, dur
+          ]
+        );
+        // gap.wait;
+        // (gap - dur).wait;
+      });
     });
+  }).add;
+)
+
+(
+  ~belch = { |regexp, outBus, parts, dur, bpm|
+    var multiplyer = 60 / bpm;
+    var realDur = dur * multiplyer;
+    var smp = ~getSmp.(regexp);
+    var length = smp.numFrames / smp.sampleRate;
+    var durHigh = realDur / parts;
+    var durLow = realDur / parts * 0.7;
+    var startPoses = Array.fill(parts, {
+      arg i;
+      ((smp.numFrames / parts) * i).trunc;
+    }).scramble;
     Routine({
-      times.do({
-        startPoses.do({
-          arg startPos;
-          var dur = rrand(0.3125, 0.625);
-          var attack = 0.1; // rrand(0.05, 0.1);
-          Synth(\ggrain,
-            [
-              \outBus, outBus,
-              \bufnum, smp,
-              \rate, [0.5].wchoose([0.6, 0.2, 0.2]),
-              \startPos, startPos,
-              \amp, [0.5, 0.7, 0.8, 0.3, 0.0].wchoose([0.2, 0.1, 0.05, 0.2, 0.45]) * 2,
-              \pan, 1.0.rand2,
-              \attack, attack,
-              \dur, dur
-            ]
-          );
-          gap.wait;
-          // (gap - dur).wait;
-        });
+      startPoses.do({
+        arg startPos;
+        var dur = rrand(durLow, durHigh);
+        var gap = durHigh;
+        var attack = rrand(0.01, 0.02);
+        Synth(\ggrain,
+          [
+            \outBus, outBus,
+            \bufnum, smp,
+            \rate, [1.0, 0.5, 2].wchoose([0.7, 0.2, 0.1]),
+            \startPos, startPos,
+            \amp, 0.8, // [0.5, 0.7, 0.8, 0.3, 0.0].wchoose([0.2, 0.1, 0.05, 0.2, 0.45]) * 2,
+            \pan, 1.0.rand2,
+            \attack, attack,
+            \dur, dur
+          ]
+        );
+        gap.wait;
+        // (gap - dur).wait;
       });
     }).play
   };
 )
 
+(
+  var melody = [
+    ["ny-f-high", 0.5], ["fi-eb-low", 2], ["nymph-Eb-low", 0.5],
+    ["orin-d-low", 0.5], ["nig-f-low", 1], ["fetz-a-low", 0.5], ["iis-f-low", 0.25], ["či-b-low", 0.25], ["mej-c", 6.5],
+    ["ooowww-f-high", 0.5], ["nymph-alt-low-eb", 2], ["nymph-Eb-low", 0.5],
+    ["orin-d-low", 0.5], ["tea-f-low", 1], ["no-a-low", 0.5], ["zel-f-low", 0.25], ["ka-b", 0.25], ["mej-c", 6.5],
+    ["ny-f-high", 0.5], ["nymph-alt-low-eb", 2], ["fi-eb-low", 0.5],
+    ["orin-d-low", 0.5], ["nig-f-low", 1], ["no-a-low", 0.5], ["křen-F", 0.25], ["či-b-low", 0.25], ["mej-c", 6.5],
+    ["interesak-g-high", 0.5], ["havoc-f-low", 2], ["křen-alt-low-f", 0.5],
+    ["fi-eb-low", 0.5], ["fetz-g-low", 1], ["ka-b", 0.5], ["han-e-low", 0.25], ["snowy", 0.25], ["low-d-high", 6.5],
+    ["div-g-high", 0.5], ["havoc-f-low", 2], ["křen-alt-low-f", 0.5],
+    ["fi-eb-low", 0.5], ["fetz-g-low", 1], ["či-b-low", 0.5], ["han-e-low", 0.25], ["snowy", 0.25], ["low-d-high", 6.5],
+    ["div-g-high", 0.5], ["havoc-f-low", 2], ["křen-alt-low-f", 0.5],
+    ["fi-eb-low", 0.5], ["fetz-g-low", 1], ["ka-b", 0.5], ["han-e-low", 0.25], ["snowy", 0.25], ["low-d-high", 6.5],
+    ["fetz-a-low", 0.5], ["nig-f-low", 1], ["no-a-low", 0.5], ["mej-c", 0.5], ["křen-F", 0.5], 
+    ["nymph-Eb-high", 0.5], ["angulo-d-low", 1], ["nymph-alt-low-e", 0.5], ["nymph-alt-low-f#", 0.05], ["fetz-a-low", 0.5], ["div-g-high", 6.5],
+    ["ka-Bb", 0.5], ["no-g-low", 1], ["ka-Bb", 0.5], ["orin-d-low", 0.5], ["no-g-low", 0.5],
+    ["ooowww-f-high", 0.5], ["nymph-alt-low-e", 1], ["snowy", 0.5], ["div-g-high", 0.25], ["ka-b", 0.25], ["sheep-a-low", 6.5]
+  ];
+  var melody2 = [
+    ["dům-c", 1], ["ka-b", 0.25], ["mej-c", 0.25], ["či-b", 1.166666666666], ["angulo-d", 0.333333333],
+    ["no-g-low", 0.333333333], ["nymph-Eb-low", 0.33333333], ["ooowww-f-high", 0.3333333], ["nymph-alt-low-e", 2],
+    ["dům-c", 0.5], ["češač-b", 0.5], ["mej-c", 0.125], ["či-b", 0.375], ["angulo-d", 0.5], ["nymph-Eb-high", 0.125], ["angulo-d", 0.375], ["div-g-high", 0.5],
+    ["no-a-low", 0.125], ["no-g-low", 0.375], ["low-d-high", 0.25], ["dům-c", 0.25], ["snowy", 0.25], ["orin-d-low", 0.25], ["han-e-low", 1.5]
+  ];
+  var melody3 = [
+    ["ny-f-high", 0.5], ["fi-eb-low", 2], ["nymph-Eb-low", 0.5],
+    ["orin-d-low", 0.5], ["nig-f-low", 1], ["fetz-a-low", 0.5], ["iis-f-low", 0.25], ["či-b-low", 0.25], ["mej-c", 6.5],
+    ["ooowww-f-high", 0.5], ["nymph-alt-low-eb", 2], ["nymph-Eb-low", 0.5],
+  ];
+  Routine({
+    melody3.do({ |note|
+      ~belch.(note[0], 0, [1, 2, 3, 4, 6, 8].wchoose([0.2, 0.4, 0.1, 0.2, 0.05, 0.05]), note[1], 72);
+      (note[1] * 60 / 72).wait;
+    })
+  }).play;
+)
 
 (
   SynthDef(\verbDelayFX, {
