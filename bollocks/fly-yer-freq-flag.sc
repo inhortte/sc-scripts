@@ -71,14 +71,15 @@ Env.circle(levels: [1, 0.2, 1], times: [ 4, 4 ], curve: [ 1, -1 ]).plot;
       dust,
       doneAction: Done.none
     );
-    var brown = ClipNoise.ar(brownEnv) * amp;
+    var brown = WhiteNoise.ar(brownEnv) * amp;
     var bpf = BPF.ar(
       in: brown,
       freq: freq,
       rq: LFTri.kr(1 / cycle).range(0.1, 4)
     );
+    var lpf = LPF.ar(bpf, freq * 8);
     var aPass = AllpassL.ar(
-      in: bpf,
+      in: lpf,
       maxdelaytime: 0.03125,
       delaytime: [ 0, 0.015625, 0.0234375, 0.01953125, 0.015 ],
       decaytime: 0.015625
