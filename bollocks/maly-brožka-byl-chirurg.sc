@@ -24,7 +24,7 @@ Synth(\highPerc, [ freq: 2000, dur: 1, amp: 0.1 ]);
 (
   SynthDef(\harpsichord, {
     arg outBus = 0, freq = 220, dur = 1, amp = 0.1;
-    var noiseEnv = Env.perc(0.01, 0.8 * dur, curve: -3).kr(2);
+    var noiseEnv = Env.perc(0.001, 0.8 * dur, curve: -3).kr(2);
     var noise = RLPF.ar(
       in: PinkNoise.ar(amp),
       freq: SinOsc.kr(0.7).range(0.7, 1.3) * [ freq * 3, freq * 7 ],
@@ -43,7 +43,106 @@ Synth(\highPerc, [ freq: 2000, dur: 1, amp: 0.1 ]);
     Out.ar(outBus, Splay.ar(pluck));
   }).add;
 )
-Synth(\harpsichord, [ freq: 880, dur: 1, amp: 0.1 ]);
+Synth(\harpsichord, [ freq: 220, dur: 1, amp: 0.1 ]);
+
+(
+  SynthDef(\verb, {
+    arg inBus, outBus = 0, mix = 0.3, size = 3, damp = 0.4, t60 = 81 / 60;
+    var in = In.ar(inBus, 2);
+    var reverb = JPverb.ar(
+      in: in,
+      t60: t60,
+      size: size,
+      earlyDiff: 0.9,
+      modDepth: 0,
+      modFreq: 0,
+      high: 3,
+      damp: damp
+    );
+    var juntos = in + reverb * 0.5;
+    Out.ar(outBus, juntos);
+  }).add;
+)
+
+(
+  ~revBus = Bus.audio(s, 2);
+  ~revSynth = Synth(\verb, [\inBus, ~revBus, \size, 0.4], addAction: \addAfter);
+)
+//
+// intro
+(
+  var harpHigh = [ 5, 6 ];
+  var harpLow = [ 7 ];
+  var dMelMinor = [ 2, 4, 5, 7, 9, 11, 13 ];
+  var harpHighBind = Pbind(
+    \instrument, \harpsichord,
+    \outBus, ~revBus,
+    \octave, 4,
+    \scale, dMelMinor,
+    \degree, Pseq(harpHigh, 16),
+    \dur, 2,
+    \amp, Prand([ 0.4, 0.38, 0.39, 0.41, 0.42 ], inf)
+  );
+  var harpLowBind = Pbind(
+    \instrument, \harpsichord,
+    \outBus, ~revBus,
+    \octave, 3,
+    \scale, dMelMinor,
+    \degree, Pseq(harpLow, 32),
+    \dur, 2,
+    \amp, Prand([ 0.2, 0.19, 0.18, 0.21, 0.22 ], inf)
+  );
+  var harpHighEnd = Pbind(
+    \instrument, \harpsichord,
+    \outBus, ~revBus,
+    \octave, 4,
+    \scale, dMelMinor,
+    \degree, Pseq([7, 6, 5], 1),
+    \dur, 0.75,
+    \amp, Prand([ 0.4, 0.38, 0.39, 0.41, 0.42 ], inf)
+  );
+  var harpLowEnd = Pbind(
+    \instrument, \harpsichord,
+    \outBus, ~revBus,
+    \octave, 3,
+    \scale, dMelMinor,
+    \degree, Pseq([7, 7, 7], 1),
+    \dur, 0.75,
+    \amp, Prand([ 0.2, 0.19, 0.18, 0.21, 0.22 ], inf)
+  );
+  Ptpar([ 
+    0.0, harpHighBind, 
+    0.0, harpLowBind,
+    64, harpLowEnd,
+    64, harpHighEnd,
+  ]).play(TempoClock(81/60));
+)
+// outro
+(
+  var harpHigh = [ 5, 6 ];
+  var harpLow = [ 7 ];
+  var bMinor = [ -1, 1, 2, 4, 6, 7, 9 ];
+  var harpHighBind = Pbind(
+    \instrument, \harpsichord,
+    \octave, 4,
+    \scale, bMinor,
+    \degree, Pseq(harpHigh, 16),
+    \dur, 2,
+    \amp, Prand([ 0.4, 0.38, 0.39, 0.41, 0.42 ], inf)
+  );
+  var harpLowBind = Pbind(
+    \instrument, \harpsichord,
+    \octave, 3,
+    \scale, bMinor,
+    \degree, Pseq(harpLow, 32),
+    \dur, 2,
+    \amp, Prand([ 0.2, 0.19, 0.18, 0.21, 0.22 ], inf)
+  );
+  Ptpar([ 
+    0.0, harpHighBind, 
+    0.0, harpLowBind
+  ]).play(TempoClock(81/60));
+)
 
 // Chorus 1 (C aeolean)
 (
@@ -86,22 +185,28 @@ Synth(\harpsichord, [ freq: 880, dur: 1, amp: 0.1 ]);
     \dur, Pseq(harpDur, inf),
     \amp, Prand([ 0.07, 0.08, 0.05 ], inf)
   );
+  Ptpar([
+    0.0, harpMelodyBind
+  ]).play(TempoClock(81/60));
+  /*
   Ptpar([ 
     0.0, harpMelodyBind, 
     0.0, harpHarmOne,
     14, harpMelodyTwoBind,
     14, harpHarmTwo
   ]).play(TempoClock(80 / 60));
+  */
 )
-// D harmonic minor
+// D harmonic major
 (
   var harpMelody = [ 1, 2, 0, 4, 5 ];
-  var harpDur = [ 1, 1.5, 1, 1.5, 1 ];
+  var harpDur = [ 0.5, 1, 1, 1.5, 2 ];
   var dHarmMin = [ 2, 4, 5, 7, 9, 10, 13 ];
+  var dHarmMaj = [ 2, 4, 6, 7, 9, 10, 13 ];
   var harpMelodyBind = Pbind(
     \instrument, \harpsichord,
     \octave, 5,
-    \scale, dHarmMin,
+    \scale, dHarmMaj,
     \degree, Pseq(harpMelody, inf),
     \dur, Pseq(harpDur, inf),
     \amp, Prand([ 0.12, 0.09, 0.1, 0.11 ], inf)
@@ -109,21 +214,21 @@ Synth(\harpsichord, [ freq: 880, dur: 1, amp: 0.1 ]);
   var harpHarm = Pbind(
     \instrument, \harpsichord,
     \octave, 3,
-    \scale, dHarmMin,
+    \scale, dHarmMaj,
     \degree, Pseq([ Pshuf([ 2, 3, 6 ], 3), Pseq([ 1, 0, 2 ], 3) ], inf),
     \dur, Pseq(harpDur, inf),
     \amp, Prand([ 0.07, 0.08, 0.05 ], inf)
-  );
+ );
   var highPerc = Pbind(
     \instrument, \highPerc,
     \octave, 6,
-    \scale, dHarmMin,
+    \scale, dHarmMaj,
     \degree, Prand([ 2, 3, 2, 2, 3, \ ], inf),
     \dur, 2,
     \durMult, Prand([ 0.8, 0.6, 0.4, 0.5, 0.76, 0.35, 0.45 ], inf),
     \amp, Prand([ 0.12, 0.09, 0.1, 0.11 ], inf)
   );
-  Ppar([ harpMelodyBind, harpHarm ]).play(TempoClock(80/60));
+  Ppar([ harpMelodyBind, harpHarm ]).play(TempoClock(72/60));
 )
 // E harmonic major / C
 (
@@ -157,67 +262,6 @@ Synth(\harpsichord, [ freq: 880, dur: 1, amp: 0.1 ]);
   );
   Ppar([ harpMelodyBind, harpHarm ]).play(TempoClock(80/60));
 )
-// intro
-(
-  var harpHigh = [ 5, 6 ];
-  var harpLow = [ 7 ];
-  var dMelMinor = [ 2, 4, 5, 7, 9, 11, 13 ];
-  var harpHighBind = Pbind(
-    \instrument, \harpsichord,
-    \octave, 4,
-    \scale, dMelMinor,
-    \degree, Pseq(harpHigh, 16),
-    \dur, 2,
-    \amp, Prand([ 0.12, 0.09, 0.1, 0.11 ], inf)
-  );
-  var harpLowBind = Pbind(
-    \instrument, \harpsichord,
-    \octave, 3,
-    \scale, dMelMinor,
-    \degree, Pseq(harpLow, 32),
-    \dur, 2,
-    \amp, Prand([ 0.07, 0.08, 0.05 ], inf)
-  );
-  var harpLowEnd = Pbind(
-    \instrument, \harpsichord,
-    \octave, 3,
-    \scale, dMelMinor,
-    \degree, Pseq([7, 7, 7], 1),
-    \dur, 0.5,
-    \amp, Prand([ 0.12, 0.09, 0.1, 0.11 ], inf)
-  );
-  Ptpar([ 
-    0.0, harpHighBind, 
-    0.0, harpLowBind,
-    64, harpLowEnd
-  ]).play(TempoClock(80/60));
-)
-// outro
-(
-  var harpHigh = [ 5, 6 ];
-  var harpLow = [ 7 ];
-  var bMinor = [ -1, 1, 2, 4, 6, 7, 9 ];
-  var harpHighBind = Pbind(
-    \instrument, \harpsichord,
-    \octave, 4,
-    \scale, bMinor,
-    \degree, Pseq(harpHigh, 16),
-    \dur, 2,
-    \amp, Prand([ 0.12, 0.09, 0.1, 0.11 ], inf)
-  );
-  var harpLowBind = Pbind(
-    \instrument, \harpsichord,
-    \octave, 3,
-    \scale, bMinor,
-    \degree, Pseq(harpLow, 32),
-    \dur, 2,
-    \amp, Prand([ 0.07, 0.08, 0.05 ], inf)
-  );
-  Ptpar([ 
-    0.0, harpHighBind, 
-    0.0, harpLowBind
-  ]).play(TempoClock(80/60));
-)
 // Transition 1
 (
   var aMelMinor = [ 9, 11, 12, 14, 16, 18, 20 ];
@@ -248,4 +292,22 @@ Synth(\harpsichord, [ freq: 880, dur: 1, amp: 0.1 ]);
     12, harp1PartThree,
     12, harp2PartThree
   ]).play(TempoClock(80/60));
+)
+
+MIDIClient.init
+
+(
+  ~midiOut = MIDIOut(0);
+  Routine({
+    loop({
+      128.do({ |i|
+        ~midiOut.control(0, ctlNum: 43, val: (i / 4.0) + 32.0);
+        (81 / 60 / 12).wait;
+      });
+      128.do({ |i|
+        ~midiOut.control(0, ctlNum: 43, val: (32.0 + 32.0) - (i / 4.0));
+        (81 / 60 / 12).wait;
+      });
+    });
+  }).play;
 )

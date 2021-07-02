@@ -20,3 +20,10 @@ s.plotTree;
     \amp, 0.5
   ).play(TempoClock(84/60));
 )
+(
+  Pbind(
+    \instrument, \metronom,
+    \dur, 3,
+    \amp, 0.5
+  ).play(TempoClock(84/60));
+)

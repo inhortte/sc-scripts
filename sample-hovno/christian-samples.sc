@@ -4,31 +4,20 @@
 )
 s.plotTree;
 
-// load soundfiles to buffers
 (
-	// LOAD SOUND FILES
+  ~fileList = List();
+  ~bufferList = List();
 
-	// prep collections (lists/arrays) holding names and references to buffers
-	~granBfrList = List();
-	~granBfr = List();
+  "/home/polaris/flavigula/xian/voice-messages/*.wav".pathMatch.collect { |file|
 
-	// scrape a folder and load all files from it
-    // YOU NEED A FOLDER "smp" next to this scd file with JUST wav files 
-	postln(" .  Loading samples for granular synthesis ..." );
-	"/home/polaris/flavigula/xian/voice-messages/*.wav".pathMatch.collect { |file|
-		
-		(">>> loading" + PathName(file).fileName).postln;
-		~granBfrList.add(PathName(file).fileName);
-    ~granBfr.add(Buffer.read(s, file));
-		// ~granBfr.add(Buffer.readChannel(s, file, channels: [0]));
-	};
+    ~fileList.add(PathName(file).fileName);
+    ~bufferList.add(Buffer.read(s, file));
+    // ~bufferList.add(Buffer.readChannel(s, file, channels: [0]));
+  };
 
-	" ".postln;
-
-  // Synth definition - simple buffer player
-  SynthDef(\bufplayer, { | out = 0, bufnum = 0, startpos = 0, amount = 16, gate = 1 |
+  SynthDef(\bufplayer, {
+    arg out = 0, bufnum = 0, startpos = 0, amount = 16, gate = 1;
     var signal, endpos, lb, idx;
-    // var env = Linen.kr(gate: gate, releaseTime: 0.01, doneAction: Done.freeSelf);
     var env = Env.perc(attackTime: 0.01, releaseTime: 0.5, curve: 0.9, doneAction: Done.freeSelf);
 
     startpos = startpos * BufSampleRate.kr(bufnum);
@@ -40,13 +29,18 @@ s.plotTree;
       idx = idx + 1;
     });
 
-    signal = PlayBuf.ar(numChannels: 1, bufnum: bufnum, rate: BufRateScale.kr(bufnum), startPos: startpos, loop: 1.0);
-    signal = signal * env;
-    Out.ar(out, signal!2 );
+    signal = PlayBuf.ar(
+      numChannels: 1, 
+      bufnum: bufnum, 
+      rate: BufRateScale.kr(bufnum), 
+      startPos: startpos, 
+      loop: 1.0
+    ) * env;
+    Out.ar(out, signal ! 2 );
   }).add;
 )
 
-~playbuf1 = Synth(\bufplayer, [ bufnum: ~granBfr.at(0), startpos: 0 ]);
+~playbuf1 = Synth(\bufplayer, [ bufnum: ~bufferList.at(0), startpos: 0 ]);
 // test if your synth works:
 //~playbuf1 = Synth(\bufplayer, [ bufnum: 0, startpos: 4;]);
 
@@ -147,28 +141,4 @@ Array.linrand(16, 0, ~gransSixteenths.size - 1).collect { |idx| ~gransSixteenths
     }
   }).play;
 )
-( 
-// PATTERN
-
-Pbind(*[
-	instrument: \bufplayer,
-	
-	bufnum:
-	Pseq([0,1,2,3,4,5,7,8,Rest()], inf),
-
-	dur:
-	Pseq(Array.fill(9, { 0.1.linrand }).put(8,7), inf),
-	
-	startpos:
-	Pseq(
-		Array.fill(4, { 180.rand })
-		.addAll(Prand(Array.fill(10, { 180.rand }),1) ! 2)
-		.addAll(Array.fill(3, { 180.rand })), inf),
-	
-    legato:
-	Prand([0.95,0.98,0.9,1,0.3], inf),
-	
-]).play;
-
-)
-
+ 

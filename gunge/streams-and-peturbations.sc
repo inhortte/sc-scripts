@@ -147,3 +147,16 @@ Synth(\percMadness, [ tAmp: 0.1, amp: 0.1, dur: 1 ]);
     });
   }).play;
 )
+
+
+(
+  {
+    LFSaw.ar(
+      freq: 196,
+      phase: 0.0,
+      mul: 0.1
+    )
+  }.play;
+)
+
+
