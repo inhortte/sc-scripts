@@ -62,8 +62,8 @@ s.waitForBoot({
       levelScale: amp,
       doneAction: 2
     );
-    6.do{
-      curFreq = freq * {Rand(0.99, 1.02)}!2;
+    3.do{
+      curFreq = freq * {Rand(0.99, 1.01)}!2;
       targetFreq = descendTo * {Rand(0.99, 1.02)}!2;
       freqLine = EnvGen.kr(
         Env.new(
@@ -121,9 +121,9 @@ x.set(\freq, 1358, \lagTime, 5);
 x.free;
 
 (
-  var durs = [8, 8, 8, 4];
-  var freqs = [1397, 1175, 1318, 988];
-  var descendTos = [1357, 1141, 1281, 784];
+  var durs = [8, 8, 4, 4, 4, 4, 4];
+  var freqs = [1397, 1175, 1318, 1244.5, 1175, 1397, 1046.5];
+  var descendTos = [1357, 1141, 1281, 1209, 1141, 1357, 1281];
   var durs2 = [6, 8, 8, 4, 8];
   var freqs2 = [ 1109, 1357, 1175, 1318, 988 ];
   var descendTos2 = [ 1077, 1357, 1141, 1281, 1046.5 ];
@@ -158,10 +158,10 @@ x.free;
   */
   Pbind(
     \instrument, \dullSaw,
-    \freq, Pseq(freqs2 , 1),
-    \descendTo, Pseq(descendTos2, 1),
+    \freq, Pseq(freqs , 1),
+    \descendTo, Pseq(descendTos, 1),
     \amp, 0.2,
-    \dur, Pseq(durs2, 1)
+    \dur, Pseq(durs, 1)
   ).play(t);
 )
 
