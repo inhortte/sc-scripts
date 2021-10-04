@@ -6,11 +6,11 @@
     loop({
       96.do({ |i|
         ~midiOut.control(0, ctlNum: 54, val: i + 16.0);
-        (72 / 60 / 4).wait;
+        (72 / 60 / 16).wait;
       });
       96.do({ |i|
         ~midiOut.control(0, ctlNum: 54, val: 112.0 - i);
-        (72 / 60 / 4).wait;
+        (72 / 60 / 16).wait;
       });
     });
   }).play;
