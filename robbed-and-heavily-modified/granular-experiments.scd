@@ -2,7 +2,7 @@
   s.options.numBuffers = 8192; 
   s.boot;
 )
-s.plotTree;
+splotTree;
 s.meter;
 s.scope;
 

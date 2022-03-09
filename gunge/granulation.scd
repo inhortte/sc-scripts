@@ -11,6 +11,7 @@
     Buffer.freeAll;
     s.sync;
 
+    /*
     ~warp = Buffer.read(s, "/flavigula/xian/warp.wav");
     ~riff1 = Buffer.read(s, "/flavigula/audacity/riff1.wav");
     // ~repriseIntroGuitarL = Buffer.readChannel(s, "/flavigula/ardour/alfred/fehut-felu/export/granulate-this-honeybunch.wav", channels: [0]);
@@ -53,37 +54,47 @@
       );
       sig = Splay.ar(sig);
     };
+    */
 
     ~inputTest = {
       var sig;
       sig = SoundIn.ar([0, 1]);
       sig = sig + CombN.ar(sig, decaytime: 4, mul: 0.5);
     };
-    ~grainInTest = {
+    SynthDef(\inToGrain, {
       var sig;
       sig = SoundIn.ar([0, 1]);
       sig = GrainIn.ar(
         2,
-        trigger: Dust.ar(64),
-        dur: LFNoise1.kr(24).range(1/64, 1/32),
+        trigger: Dust.ar(\dust.ir(64)),
+        dur: LFNoise1.kr(\durFreq.ir(24)).range(\durLow.ir(1/64), \durHigh.ir(1/32)),
         in: sig,
-        pan: LFNoise1.kr(52).range(-1, 1),
+        pan: LFNoise1.kr(\panFreq.ir(52)).range(-1, 1),
         mul: 0.5
       );
+      sig = HPF.ar(
+        in: sig,
+        freq: 1200
+      );
       sig = sig + CombN.ar(sig, delaytime: 0.88888888888888, decaytime: 2.66666666667, mul: 0.7);
-    }
-
+      Out.ar(\outBus.ir(0), sig);
+    }).add;
   });
 )
 
+/*
 {LFSaw.kr(10, 1)}.plot(0.2);
 n = ~warp.play;
 n.free;
 ~warp.free;
+*/
+/*
 m = ~grainy.play;
 m.stop;
 m.free;
+*/
 p = ~inputTest.play;
 p.free;
-q = ~grainInTest.play;
+q = Synth(\inToGrain, [ \dust, 128, \durFreq, 48 ]);
+q.stop;
 q.free;
