@@ -61,7 +61,7 @@ s.plotTree
         (81/60/4).wait;
       });
     });
-    ~melodyEphr = Array.fill(8, [ 61, 57, 59, 52, 55 ]).flatten; // cis a b e g (Ephr - playing G lyd pent)
+    ~melodyEphr = Array.fill(8, [ 61, 57, 59, 52, 55 ]).flatten; // cis a b e g (Edor - playing G lyd pent)
     ~melodyEb9 = Array.fill(8, [ 63, 58, 61, 53, 55 ]).flatten; // ees bes des f g (Eb9 - playing Db lyd pent)
     ~melodyEm6 = Array.fill(8, [ 64, 59, 62, 54, 57 ]).flatten; // e b d fis a (Em6 - playing D pent)
     ~melodyAqu = Array.fill(8, [ 65, 60, 62, 55, 57 ]).flatten; // f c d g a (Aqu - playing F pent)
