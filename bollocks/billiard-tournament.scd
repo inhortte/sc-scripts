@@ -106,27 +106,43 @@
       \group, g,
       \outBus, d,
       \addAction, 0,
-      \amp, 0.4,
-      \dur, Pseq([1.5, 1.5, 1, 1], inf),
-      \freq, Pseq(~d7melody1.midicps, inf)
+      \amp, 0.9,
+      \dur, Pseq([0.75, 0.75, 0.5, 0.5], inf),
+      \freq, Pseq(~d7melody1.midicps, 13)
     );
     ~edor1 = Pbind(
       \instrument, \UZPulse,
       \group, g,
       \outBus, d,
       \addAction, 0,
-      \amp, 0.4,
+      \amp, 0.9,
       \highCO, 15,
-      \dur, Pseq([1.5, 1.5, 1, 1], inf),
-      \freq, Pseq(~edormelody1.midicps, inf)
+      \dur, Pseq([0.75, 0.75, 0.5, 0.5], inf),
+      \freq, Pseq(~edormelody1.midicps, 1)
     );
   });
 )
 
 Synth.tail(g, \reverberation, [ outBus: 0, inBus: d, mix: 0.5, room: 0.7 ]);
 (
-  Ppar([
-    // ~d7phr1
-    ~edor1
+  Ptpar([
+    0.0, ~d7phr1,
+    32.5, ~edor1,
+    35, ~edor1,
+    37.5, ~edor1,
+    // 40.0 - silence
+    42.5, ~edor1,
+    45.0, ~edor1,
+    // 47.5 - silence
+    50.0, ~edor1,
+    52.5, ~edor1,
+    // 55.0 - silence
+    57.5, ~edor1,
+    60.0, ~edor1,
+    62.5, ~edor1,
+    // 65.0 - silence
+    67.5, ~edor1,
+    70.0, ~edor1,
+    72.5, ~edor1
   ]).play(TempoClock(54/60));
 )
